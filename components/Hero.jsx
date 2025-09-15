@@ -2,7 +2,6 @@
 import { assets } from '@/assets/assets'
 import { ArrowRightIcon, ChevronRightIcon } from 'lucide-react'
 import Image from 'next/image'
-import React from 'react'
 import CategoriesMarquee from './CategoriesMarquee'
 
 const Hero = () => {

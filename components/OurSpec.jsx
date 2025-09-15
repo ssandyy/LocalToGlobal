@@ -1,6 +1,5 @@
-import React from 'react'
+import { ourSpecsData } from '@/assets/assets.js'
 import Title from './Title'
-import { ourSpecsData } from '@/assets/assets'
 
 const OurSpecs = () => {
 
