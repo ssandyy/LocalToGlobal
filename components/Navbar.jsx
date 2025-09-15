@@ -53,12 +53,14 @@ const Navbar = () => {
                                 <button onClick={openSignIn} className="px-8 py-2 bg-indigo-500 hover:bg-indigo-600 transition text-white rounded-full">
                                     Login
                                 </button>
+
                             ) : (
-                                <UserButton>
+                                <UserButton >
+
                                     <UserButton.MenuItems>
-                                        <UserButton.Action label="My Profile" labelIcon={<User2Icon size={18} />} onClick={() => router.push('/profile')}> Profile</UserButton.Action>
+                                        {/* <UserButton.Action label="My Profile" labelIcon={<User2Icon size={18} />} onClick={() => router.push('/profile')}> Profile</UserButton.Action> */}
                                         <UserButton.Action label="My Orders" labelIcon={<ShoppingCart size={18} />} onClick={() => router.push('/orders')} />
-                                        <UserButton.Action label="Logout" labelIcon={<DoorClosedIcon size={18} />} onClick={() => router.push('/logout')} />
+                                        {/* <UserButton.Action label="Logout" labelIcon={<DoorClosedIcon size={18} />} onClick={() => router.push('/logout')} /> */}
                                     </UserButton.MenuItems>
                                 </UserButton>
                             )
