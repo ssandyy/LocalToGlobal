@@ -91,3 +91,4 @@ export default function CreateStore() {
         </>
     ) : (<Loading />)
 }
+export const dynamic = 'force-dynamic'
