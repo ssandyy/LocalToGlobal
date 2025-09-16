@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { getAuth } from "@clerk/nextjs/dist/types/server";
+import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 
@@ -38,6 +38,7 @@ export const POST = async (req) => {
                 username: username.toLowerCase()
             }
         })
+
         if (usernameTaken) {
             return new NextResponse(JSON.stringify({ error: "Username already taken!!, please try diffrent one..!" }), { status: store.status })
         }
@@ -102,7 +103,6 @@ export const GET = async (req) => {
         if (!store) {
             return new NextResponse(JSON.stringify({ error: "You don't have any store" }), { status: store.status })
         }
-
         return new NextResponse(JSON.stringify(store), { status: 200 })
     } catch (error) {
         return new NextResponse(JSON.stringify({ error: error.message } || "Something went wrong"), { status: error.code })

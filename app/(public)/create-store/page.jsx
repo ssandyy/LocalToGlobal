@@ -1,12 +1,18 @@
 'use client'
 import { assets } from "@/assets/assets"
 import Loading from "@/components/Loading"
+import { useAuth, useUser } from "@clerk/nextjs"
+import axios from "axios"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 
 export default function CreateStore() {
 
+    const { user } = useUser()
+    const router = useRouter()
+    const { getToken } = useAuth()
     const [alreadySubmitted, setAlreadySubmitted] = useState(false)
     const [status, setStatus] = useState("")
     const [loading, setLoading] = useState(true)
@@ -35,14 +41,54 @@ export default function CreateStore() {
 
     const onSubmitHandler = async (e) => {
         e.preventDefault()
-        // Logic to submit the store details
 
+        if (!user) {
+            return toast.error("You need to be logged in to submit your store.")
+        }
+
+        try {
+            const token = await getToken()
+            const formData = new FormData()
+            formData.append("name", storeInfo.name),
+                formData.append("username", storeInfo.username),
+                formData.append("description", storeInfo.description),
+                formData.append("email", storeInfo.email),
+                formData.append("contact", storeInfo.contact),
+                formData.append("address", storeInfo.address),
+                formData.append("image", storeInfo.image)
+
+            const { data } = await axios.post("/api/stores/create", formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+
+            if (data.success) {
+                toast.success(data.message)
+                // setAlreadySubmitted(true)
+                // setStatus(data.status)
+                // setMessage(data.message)
+            }
+
+        } catch (error) {
+            return toast.error(error?.message?.response?.data?.message || error.message)
+        }
 
     }
 
     useEffect(() => {
         fetchSellerStatus()
     }, [])
+
+    if (!user) {
+        return (
+            <div className="mx-6 min-h-[70vh] my-16">
+                <div className="max-w-7xl mx-auto flex flex-col items-center gap-3 text-slate-500">
+                    <h1 className="text-3xl ">You need to be logged in first, to create your store..!</h1>
+                </div>
+            </div>
+        )
+    }
 
     return !loading ? (
         <>
