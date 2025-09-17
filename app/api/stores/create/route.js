@@ -1,110 +1,159 @@
+import imagekit from "@/lib/imagekit";
 import prisma from "@/lib/prisma";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-
 export const POST = async (req) => {
     try {
         const { userId } = getAuth(req);
+        if (!userId) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
         const formData = await req.formData();
 
-        const name = formData.get('name');
-        const description = formData.get('description');
-        const username = formData.get('username');
-        const email = formData.get('email');
-        const contact = formData.get('contact');
-        const address = formData.get('address');
-        const image = formData.get('image');
+        const name = (formData.get("name") || "").toString().trim();
+        const description = (formData.get("description") || "").toString().trim();
+        const username = (formData.get("username") || "").toString().trim();
+        const email = (formData.get("email") || "").toString().trim();
+        const contact = (formData.get("contact") || "").toString().trim();
+        const address = (formData.get("address") || "").toString().trim();
+        const image = formData.get("image");
 
-        //check if any filed details missing
+        // Check if any field details are missing
         if (!name || !description || !username || !email || !contact || !address || !image) {
-            return new NextResponse(JSON.stringify({ error: "All fields are required" }), { status: 400 })
+            return NextResponse.json({ error: "All fields are required" }, { status: 400 });
         }
 
-        //check if user already register store
-        const store = await prisma.store.findFirst({
-            where: {
-                userId: userId
+        // Perform user upsert and duplicate-store check in a single transaction to avoid FK issues
+        await prisma.$transaction(async (tx) => {
+            // Ensure a corresponding User exists to satisfy FK (upsert using provided form fields)
+            await tx.user.upsert({
+                where: { id: userId },
+                update: {
+                    name: name || "User",
+                    email: email,
+                    image: ""
+                },
+                create: {
+                    id: userId,
+                    name: name || "User",
+                    email: email,
+                    image: ""
+                }
+            });
+
+            // Check if user already has a registered store
+            const existing = await tx.store.findFirst({ where: { userId } });
+            if (existing) {
+                throw new Error("You already have a store");
             }
-        })
 
-        if (store) {
-            return new NextResponse(JSON.stringify({ error: "You already have a store" }), { status: 400 })
-        }
+            return null;
+        });
 
-        //check username taken or available
+        // Check if username is taken
         const usernameTaken = await prisma.store.findFirst({
             where: {
-                username: username.toLowerCase()
-            }
-        })
+                username: username.toLowerCase(),
+            },
+        });
 
         if (usernameTaken) {
-            return new NextResponse(JSON.stringify({ error: "Username already taken!!, please try diffrent one..!" }), { status: store.status })
+            return NextResponse.json({ error: "Username already taken! Please try a different one." }, { status: 400 });
         }
 
+        // Image upload to ImageKit (handle multipart File)
+        let uploadBuffer;
+        let uploadFileName = "store-logo";
+        if (typeof image === "string") {
+            // base64 string fallback
+            uploadBuffer = Buffer.from(image.replace(/^data:image\/\w+;base64,/, ""), "base64");
+        } else {
+            // image is a File (Blob) from multipart form-data
+            const arrayBuffer = await image.arrayBuffer();
+            uploadBuffer = Buffer.from(arrayBuffer);
+            uploadFileName = image.name || uploadFileName;
+        }
 
-        // image upload to image kit
-        const buffer = Buffer.from(image.replace(/^data:image\/\w+;base64,/, ''), 'base64');
         const response = await imagekit.upload({
-            file: buffer,
-            fileName: "store-logo",
+            file: uploadBuffer,
+            fileName: uploadFileName,
             folder: "store-logos",
-            useUniqueFileName: true
-        })
+            useUniqueFileName: true,
+        });
 
         const optimizedImage = imagekit.url({
-            path: response.path,
-            transformations: [{ width: 300, height: 300, quality: auto, gravity: "auto" }]
-        })
+            src: response.url,
+            transformation: [{ width: 300, height: 300, quality: "auto", crop: "auto" }],
+        });
 
-        const newStore = await prisma.store.create({
-            data: {
-                name,
-                description,
-                username: username.toLowerCase(),
-                email,
-                contact,
-                address,
-                image: optimizedImage,
-                userId
-            }
-        })
-
-        //link store to user
-        await prisma.user.update({
-            where: {
-                id: userId
-            },
+        // Create the new store via relation to guarantee FK
+        const createdUserWithStore = await prisma.user.update({
+            where: { id: userId },
             data: {
                 store: {
-                    id: newStore.id
+                    create: {
+                        name,
+                        description,
+                        username: username.toLowerCase(),
+                        email,
+                        contact,
+                        address,
+                        logo: optimizedImage,
+                    }
                 }
-            }
-        })
+            },
+            select: { store: { select: { id: true, status: true, name: true, username: true, logo: true } } }
+        });
+        const createdStore = createdUserWithStore.store;
 
-        return new NextResponse(JSON.stringify({ name, description, username, email, contact, address, image, userId }), { message: "Store created successfully" }, { status: 201 })
+        // Link store to user - This part needs to be adjusted based on your User model
+        // Your User model doesn't have a direct storeId field, so this might not be needed
+        // as the relation is already established through the userId in the Store model
+
+        return NextResponse.json(
+            { message: "Store created successfully", store: createdStore },
+            { status: 201 }
+        );
     } catch (error) {
-        return new NextResponse(JSON.stringify({ error: error.message } || "Something went wrong"), { status: error.code })
+        console.error("Error creating store:", error);
+        if (error.message === "You already have a store") {
+            return NextResponse.json({ error: error.message }, { status: 400 });
+        }
+        return NextResponse.json(
+            { error: error.message || "Something went wrong" },
+            { status: 500 }
+        );
     }
-}
+};
 
-
-//check if user has already register  store and if yes then send the status of store 
-
+// Check if user has already registered a store and if yes, return the store
 export const GET = async (req) => {
     try {
         const { userId } = getAuth(req);
+
+        if (!userId) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const store = await prisma.store.findFirst({
             where: {
-                userId: userId
-            }
-        })
+                userId,
+            },
+        });
+
         if (!store) {
-            return new NextResponse(JSON.stringify({ error: "You don't have any store" }), { status: store.status })
+            // No store yet: return 200 with empty body to avoid client-side 404 errors
+            return NextResponse.json({}, { status: 200 });
         }
-        return new NextResponse(JSON.stringify(store), { status: 200 })
+
+        // Return minimal status info plus id if needed by clients
+        return NextResponse.json({ id: store.id, status: store.status }, { status: 200 });
     } catch (error) {
-        return new NextResponse(JSON.stringify({ error: error.message } || "Something went wrong"), { status: error.code })
+        console.error("Error fetching store:", error);
+        return NextResponse.json(
+            { error: error.message || "Something went wrong" },
+            { status: 500 }
+        );
     }
-}
+};
