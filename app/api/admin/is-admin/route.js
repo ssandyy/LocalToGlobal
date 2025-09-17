@@ -1,0 +1,17 @@
+
+
+export async function GET(req) {
+    try {
+        const { userId } = getAuth(req)
+        const isAdmin = await authAdmin(userId)
+
+        if (!isAdmin) {
+            return NextResponse.json({ error: "You are not authorised to access..!" }, { status: 401 })
+        }
+
+        return NextResponse.json({ isAdmin }, { status: 200 })
+
+    } catch (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+}
