@@ -27,6 +27,7 @@ const authAdmin = async (userId) => {
         if (adminEmails.length === 0) return false
 
         return adminEmails.includes(primaryEmail)
+
     } catch (error) {
         console.log(error);
         return false
