@@ -1,4 +1,4 @@
-import { clerkClient } from "@clerk/nextjs/server";
+import { clerkClient, currentUser } from "@clerk/nextjs/server";
 
 const authAdmin = async (userId) => {
 
@@ -6,14 +6,27 @@ const authAdmin = async (userId) => {
     try {
         if (!userId) return false;
 
-        // if user is admin
-        const client = await clerkClient()
-        const user = await client.users.getUser(userId)
+        // Prefer currentUser(); fall back to clerkClient if available
+        let user = await currentUser()
+        if (!user && clerkClient?.users?.getUser) {
+            user = await clerkClient.users.getUser(userId)
+        }
 
-        // return user.roles.includes('admin')
+        const primaryId = user?.primaryEmailAddressId
+        const primaryObj = user?.emailAddresses?.find((e) => e.id === primaryId)
+        const primaryEmail = (primaryObj?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || "").trim().toLowerCase()
 
-        // if email is added in admin email list 
-        return process.env.ADMIN_EMAILS.includes(user.emailAddresses[0], emailAddresses)
+        // Support either ADMIN_EMAIL (single) or ADMIN_EMAILS (comma-separated)
+        const single = (process.env.ADMIN_EMAIL || "").trim()
+        const list = (process.env.ADMIN_EMAILS || "").trim()
+
+        const adminEmails = [single, ...list.split(",")]
+            .map((e) => e.trim().toLowerCase())
+            .filter(Boolean)
+
+        if (adminEmails.length === 0) return false
+
+        return adminEmails.includes(primaryEmail)
     } catch (error) {
         console.log(error);
         return false

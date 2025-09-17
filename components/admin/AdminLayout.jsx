@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import Loading from "../Loading"
 import AdminNavbar from "./AdminNavbar"
 import AdminSidebar from "./AdminSidebar"
+import axios from "axios"
 
 
 
@@ -21,7 +22,7 @@ const AdminLayout = ({ children }) => {
         try {
             const token = await getToken()
             const { data } = await axios.get('/api/admin/is-admin', {
-                header: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` }
             })
             setIsAdmin(data.isAdmin)
             setLoading(false)
