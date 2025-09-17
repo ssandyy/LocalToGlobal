@@ -1,24 +1,41 @@
 'use client'
+import { useAuth, useUser } from "@clerk/nextjs"
+import { ArrowRightIcon } from "lucide-react"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import Loading from "../Loading"
-import Link from "next/link"
-import { ArrowRightIcon } from "lucide-react"
 import AdminNavbar from "./AdminNavbar"
 import AdminSidebar from "./AdminSidebar"
 
+
+
 const AdminLayout = ({ children }) => {
+
+    const { user } = useUser()
+    const { getToken } = useAuth()
 
     const [isAdmin, setIsAdmin] = useState(false)
     const [loading, setLoading] = useState(true)
 
     const fetchIsAdmin = async () => {
-        setIsAdmin(true)
-        setLoading(false)
+        try {
+            const token = await getToken()
+            const { data } = await axios.get('/api/admin/is-admin', {
+                header: { Authorization: `Bearer ${token}` }
+            })
+            setIsAdmin(data.isAdmin)
+            setLoading(false)
+        } catch (error) {
+            console.log(error)
+            setLoading(false)
+        }
     }
 
     useEffect(() => {
-        fetchIsAdmin()
-    }, [])
+        if (user) {
+            fetchIsAdmin()
+        }
+    }, [user])
 
     return loading ? (
         <Loading />

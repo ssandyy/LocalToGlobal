@@ -12,6 +12,7 @@ const authAdmin = async (userId) => {
 
         // return user.roles.includes('admin')
 
+        // if email is added in admin email list 
         return process.env.ADMIN_EMAILS.includes(user.emailAddresses[0], emailAddresses)
     } catch (error) {
         console.log(error);
