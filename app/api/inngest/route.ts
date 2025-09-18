@@ -1,4 +1,4 @@
-import { SyncUserCreation, SyncUserDeletion, SyncUserUpdation } from "@/inngest/functions";
+import { CouponExpiry, SyncUserCreation, SyncUserDeletion, SyncUserUpdation } from "@/inngest/functions";
 import { serve } from "inngest/next";
 import { inngest } from "../../../inngest/client";
 
@@ -10,6 +10,7 @@ export const { GET, POST, PUT } = serve({
     functions: [
         SyncUserCreation,
         SyncUserUpdation,
-        SyncUserDeletion
+        SyncUserDeletion,
+        CouponExpiry
     ],
 });

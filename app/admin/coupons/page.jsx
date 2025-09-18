@@ -83,7 +83,7 @@ export default function AdminCoupons() {
             if (!confirm) return
 
             const token = await getToken()
-            const { data } = await axios.delete(`/api/admin/coupon/${code}`, {
+            const { data } = await axios.delete(`/api/admin/coupon?code=${code}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             toast.success(data.message)
@@ -179,7 +179,7 @@ export default function AdminCoupons() {
 
                 <div className="overflow-x-auto mt-4 rounded-lg border border-slate-200 max-w-full">
                     <table className="min-w-full bg-white text-sm">
-                        <thead className="bg-slate-50">
+                        <thead className="bg-slate-300">
                             <tr>
                                 <th className="py-3 px-4 text-left font-semibold text-slate-600">Code</th>
                                 <th className="py-3 px-4 text-left font-semibold text-slate-600">Description</th>
