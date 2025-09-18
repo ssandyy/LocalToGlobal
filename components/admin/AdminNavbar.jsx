@@ -5,8 +5,8 @@ import Link from "next/link"
 const AdminNavbar = () => {
     const { user } = useUser()
 
-    console.log("user data:", user);
-    console.log("user firstName:", user.firstName);
+    // console.log("user data:", user);
+    // console.log("user firstName:", user.firstName);
 
 
 

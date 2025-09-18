@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma"
+import authAdmin from "@/middleware/authAdmin"
 import { getAuth } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
-import authAdmin from "./middleware/authAdmin"
 
 // Approve seller store
 export async function POST(req) {
@@ -19,12 +19,12 @@ export async function POST(req) {
         if (status == 'approved') {
             await prisma.store.update({
                 where: { id: storeId },
-                data: { status: "approved", approvedAt: new Date(), isActive: true }
+                data: { status: "approved", isActive: true }
             })
         } else if (status == 'rejected') {
             await prisma.store.update({
                 where: { id: storeId },
-                data: { status: "rejected", rejectedAt: new Date() }
+                data: { status: "rejected", isActive: false }
             })
         }
 
