@@ -39,6 +39,7 @@
     "@tailwindcss/postcss": "^4",
     "@types/react": "19.1.13",
     "@types/ws": "^8.18.1",
+    "inngest-cli": "^1.11.10",
     "prisma": "^6.16.1",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.8"
