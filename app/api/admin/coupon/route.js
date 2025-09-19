@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma"
 import authAdmin from "@/middleware/authAdmin"
 import { getAuth } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
+import { inngest } from "../../../../inngest/client"
 
 
 
@@ -22,6 +23,7 @@ export async function POST(req) {
         // await prisma.coupon.create({ data: coupon })
         //OR
         //Lets schedule the expiry of the coupon with inngest 
+
         await prisma.coupon.create({ data: coupon }).then(async (coupon) => {
             await inngest.send({
                 name: "app/coupon.expiry",
