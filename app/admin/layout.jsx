@@ -19,9 +19,9 @@ export default function RootAdminLayout({ children }) {
             </SignedIn>
             <SignedOut>
                 <div className="min-h-screen flex flex-col items-center justify-center text-center px-6">
-                    <h1 className="text-2xl sm:text-4xl font-semibold text-slate-400">You are not authorized to access this page</h1>
+                    <h1 className="text-2xl sm:text-4xl font-semibold m-2 text-slate-400">You are not authorized to access this page</h1>
                     <hr />
-                    <SignIn fallbackRedirectUrl="/admin" routing="hash" />
+                    <SignIn fallbackRedirectUrl="/" routing="hash" />
                 </div>
             </SignedOut>
         </>
